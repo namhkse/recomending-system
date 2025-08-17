@@ -1,0 +1,10 @@
+streamlit==1.48.0
+pinecone==7.3.0
+langchain==0.3.27
+langchain-openai==0.3.30
+langchain-community==0.3.27
+openai==1.99.9
+python-dotenv==1.1.1
+pandas==2.3.1
+numpy==2.3.2
+tiktoken==0.10.0
