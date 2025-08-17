@@ -1,6 +1,6 @@
 """
 Main Streamlit application for the Product Recommendation Chatbot.
-Provides a modern, user-friendly interface for product discovery.
+Provides a modern, user-friendly interface for product discovery with login authentication.
 """
 
 import streamlit as st
@@ -38,6 +38,25 @@ st.markdown("""
         text-align: center;
         color: #666;
         margin-bottom: 2rem;
+    }
+    
+    .login-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 30px;
+        margin: 50px auto;
+        max-width: 400px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .welcome-message {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 20px 0;
+        color: #155724;
     }
     
     .chat-container {
@@ -95,8 +114,62 @@ st.markdown("""
     .stButton > button:hover {
         background-color: #0056b3;
     }
+    
+    .logout-button {
+        background-color: #dc3545 !important;
+    }
+    
+    .logout-button:hover {
+        background-color: #c82333 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# Allowed users
+ALLOWED_USERS = ["dog", "cat", "fish", "bird"]
+
+def check_authentication():
+    """Check if user is authenticated."""
+    return "authenticated" in st.session_state and st.session_state.authenticated
+
+def login_page():
+    """Display login page."""
+    st.markdown('<h1 class="main-header">🛍️ TechStore Assistant</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Your AI-powered shopping companion for phones, laptops, and tablets</p>', unsafe_allow_html=True)
+    
+    # Login container
+    st.markdown("""
+    <div class="login-container">
+        <h2 style="text-align: center; margin-bottom: 30px;">🔐 Login Required</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 20px;">
+            Please enter your username to access the chatbot.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Login form
+    with st.container():
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            username = st.text_input("Username:", placeholder="Enter your username")
+            
+            if st.button("Login", key="login_button"):
+                if username.lower() in [user.lower() for user in ALLOWED_USERS]:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.success(f"Welcome, {username}! 🎉")
+                    st.rerun()
+                else:
+                    st.error("❌ Access denied. Only authorized users can access this application.")
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666;'>
+        <p>Powered by Azure OpenAI, Pinecone, and Langchain</p>
+        <p>Built with ❤️ using Streamlit</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 @st.cache_resource
 def initialize_chatbot():
@@ -129,15 +202,34 @@ def display_product_card(product):
         </div>
         """, unsafe_allow_html=True)
 
-def main():
-    """Main application function."""
+def main_app():
+    """Main application function after authentication."""
     
-    # Header
+    # Header with welcome message
     st.markdown('<h1 class="main-header">🛍️ TechStore Assistant</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Your AI-powered shopping companion for phones, laptops, and tablets</p>', unsafe_allow_html=True)
+    
+    # Welcome message
+    if "username" in st.session_state:
+        st.markdown(f"""
+        <div class="welcome-message">
+            <strong>Welcome, {st.session_state.username}!</strong> 🎉 You're now logged in and can use the chatbot.
+        </div>
+        """, unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
+        st.markdown("### 👤 User Info")
+        if "username" in st.session_state:
+            st.write(f"**Logged in as:** {st.session_state.username}")
+        
+        if st.button("🚪 Logout", key="logout_button", help="Click to logout"):
+            st.session_state.authenticated = False
+            if "username" in st.session_state:
+                del st.session_state.username
+            if "messages" in st.session_state:
+                del st.session_state.messages
+            st.rerun()
+        
         st.markdown("### 🛠️ Setup & Configuration")
         
         # Check environment variables
@@ -187,6 +279,8 @@ def main():
                 st.rerun()
         
         if st.button("🗑️ Clear Chat History"):
+            if "messages" in st.session_state:
+                del st.session_state.messages
             chatbot.clear_memory()
             st.success("Chat history cleared!")
             st.rerun()
@@ -239,34 +333,40 @@ def main():
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
     
-    # TODO: Quick suggestions
-    # st.markdown("### 💡 Quick Suggestions")
-    # col1, col2, col3 = st.columns(3)
+    # Quick suggestions
+    st.markdown("### 💡 Quick Suggestions")
+    col1, col2, col3 = st.columns(3)
     
-    # TODO: Not supported yet
-    # with col1:
-    #     if st.button("📱 Find a phone"):
-    #         st.session_state.messages.append({"role": "user", "content": "I'm looking for a new smartphone. Can you recommend some options?"})
-    #         st.rerun()
+    with col1:
+        if st.button("📱 Find a phone"):
+            st.session_state.messages.append({"role": "user", "content": "I'm looking for a new smartphone. Can you recommend some options?"})
+            st.rerun()
     
-    # with col2:
-    #     if st.button("💻 Find a laptop"):
-    #         st.session_state.messages.append({"role": "user", "content": "I need a laptop for work and productivity. What would you recommend?"})
-    #         st.rerun()
+    with col2:
+        if st.button("💻 Find a laptop"):
+            st.session_state.messages.append({"role": "user", "content": "I need a laptop for work and productivity. What would you recommend?"})
+            st.rerun()
     
-    # with col3:
-    #     if st.button("📱 Find a tablet"):
-    #         st.session_state.messages.append({"role": "user", "content": "I want a tablet for entertainment and productivity. Any suggestions?"})
-    #         st.rerun()
+    with col3:
+        if st.button("📱 Find a tablet"):
+            st.session_state.messages.append({"role": "user", "content": "I want a tablet for entertainment and productivity. Any suggestions?"})
+            st.rerun()
     
     # Footer
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666;'>
-        <p>Powered by 5AI</p>
+        <p>Powered by Azure OpenAI, Pinecone, and Langchain</p>
         <p>Built with ❤️ using Streamlit</p>
     </div>
     """, unsafe_allow_html=True)
+
+def main():
+    """Main function that handles authentication and app flow."""
+    if not check_authentication():
+        login_page()
+    else:
+        main_app()
 
 if __name__ == "__main__":
     main()
