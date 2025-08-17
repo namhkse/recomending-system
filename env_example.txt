@@ -1,0 +1,13 @@
+# Azure OpenAI Configuration
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_VERSION=2023-12-01-preview
+AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment_name
+
+# Pinecone Configuration
+PINECONE_API_KEY=your_pinecone_api_key_here
+PINECONE_ENVIRONMENT=your_pinecone_environment
+PINECONE_INDEX_NAME=product-recommendations
+
+# Optional: OpenAI Configuration (if using OpenAI instead of Azure)
+OPENAI_API_KEY=your_openai_api_key_here
